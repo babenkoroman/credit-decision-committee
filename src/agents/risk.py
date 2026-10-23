@@ -1,6 +1,6 @@
 from langchain_core.messages import SystemMessage
 
-from src.agents.state import State
+from src.agents.state import State, Vote
 from src.infrastructure.llm.deepseek import get_llm
 from src.rules.hard_stops import risk_decision
 
@@ -11,17 +11,22 @@ class RiskAgent:
         self._llm = llm or get_llm()
 
     def __call__(self, state: State) -> dict:
-        answer = risk_decision(self._application.credit_sum)
+        vote = risk_decision(self._application.credit_sum)
 
         result = self._llm.invoke(
             [
                 SystemMessage(
                     content=(
-                        f"Мы на модели рисков решили на заявку кредита ответить {answer}. "
-                        "ты должен объяснить это решение (кратко в два предложения)"
+                        f"Мы на модели рисков решили по заявке: {vote}. "
+                        "Объясни это решение кратко в два предложения. "
+                        "Не меняй само решение."
                     )
                 )
             ]
         )
 
-        return {"summary": state.summary + " " + result.content}
+        return {
+            "votes": [
+                Vote(agent="risk", vote=vote, reason=result.content.strip())
+            ]
+        }

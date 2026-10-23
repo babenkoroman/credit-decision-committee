@@ -1,6 +1,7 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from src.agents.state import State
+from src.agents.parse import parse_vote_response
+from src.agents.state import State, Vote
 from src.infrastructure.llm.deepseek import get_llm
 
 
@@ -11,21 +12,21 @@ class AdvocatAgent:
 
     def __call__(self, state: State) -> dict:
         application_json = self._application.model_dump_json(indent=2)
+        antifrod = next((v for v in state.votes if v.agent == "antifrod"), None)
+        antifrod_text = (
+            f"{antifrod.vote}: {antifrod.reason}" if antifrod else "нет заключения"
+        )
 
         result = self._llm.invoke(
             [
                 SystemMessage(
                     content=(
                         "Ты — адвокат заявителя в кредитном комитете.\n"
-                        "Твоя задача — защитить интересы клиента: оспорить или смягчить "
-                        "выводы антифрод-агента, опираясь на те же данные заявки.\n\n"
-                        "Не отрицай факты без оснований. Ищи альтернативные объяснения, "
-                        "смягчающие обстоятельства и аргументы в пользу выдачи кредита.\n"
-                        "Не выдумывай данные, которых нет во входе.\n\n"
-                        "Формат ответа:\n"
-                        "1) позиция: защитить заявку / частично согласиться / согласиться с антифродом;\n"
-                        "2) контраргументы к ключевым пунктам антифрод-решения;\n"
-                        "3) итог в 2–3 предложениях: почему кредит всё же можно рассмотреть."
+                        "Оспорь или смягчи выводы антифрода. Не выдумывай данные.\n"
+                        "Маппинг: защитить заявку → approve, частично согласиться → manual_review, "
+                        "согласиться с антифродом → reject.\n"
+                        "Ответь ТОЛЬКО JSON без markdown:\n"
+                        '{"vote":"approve"|"reject"|"manual_review","reason":"контраргументы и итог"}'
                     )
                 ),
                 HumanMessage(
@@ -33,10 +34,11 @@ class AdvocatAgent:
                         "Данные заявки и заявителя (JSON):\n"
                         f"{application_json}\n\n"
                         "Заключение антифрод-агента:\n"
-                        f"{state.antifrod_agent_decision}"
+                        f"{antifrod_text}"
                     )
                 ),
             ]
         )
 
-        return {"advocate_agent_decision": result.content}
+        vote, reason = parse_vote_response(result.content)
+        return {"votes": [Vote(agent="advocate", vote=vote, reason=reason)]}

@@ -1,8 +1,14 @@
-from pydantic import BaseModel
+from typing import Annotated
+
+import operator
+from pydantic import BaseModel, Field
+
+from src.schemas import Vote
+
+__all__ = ["State", "Vote"]
 
 
 class State(BaseModel):
-    result: str = ""
-    summary: str = ""
-    antifrod_agent_decision: str = ""
-    advocate_agent_decision: str = ""
+    votes: Annotated[list[Vote], operator.add] = Field(default_factory=list)
+    decision: str = ""
+    memo: str = ""

@@ -1,6 +1,7 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from src.agents.state import State
+from src.agents.parse import parse_vote_response
+from src.agents.state import State, Vote
 from src.infrastructure.llm.deepseek import get_llm
 
 
@@ -17,14 +18,10 @@ class AntifrodAgent:
                 SystemMessage(
                     content=(
                         "Ты — антифрод-аналитик кредитного комитета.\n"
-                        "Твоя задача — оценить заявку на признаки мошенничества или "
-                        "недобросовестного поведения и дать рекомендацию.\n\n"
-                        "Опирайся только на переданные данные о заявке и заявителе. "
-                        "Не выдумывай факты, которых нет во входных данных.\n\n"
-                        "Формат ответа:\n"
-                        "1) решение: низкий риск / средний риск / высокий риск;\n"
-                        "2) рекомендация: одобрить / доп. проверка / отказать;\n"
-                        "3) обоснование в 2–3 предложениях с указанием конкретных сигналов."
+                        "Оцени заявку на признаки мошенничества. Не выдумывай факты.\n"
+                        "Маппинг: низкий риск → approve, средний → manual_review, высокий → reject.\n"
+                        "Ответь ТОЛЬКО JSON без markdown:\n"
+                        '{"vote":"approve"|"reject"|"manual_review","reason":"обоснование с сигналами"}'
                     )
                 ),
                 HumanMessage(
@@ -36,4 +33,5 @@ class AntifrodAgent:
             ]
         )
 
-        return {"antifrod_agent_decision": result.content}
+        vote, reason = parse_vote_response(result.content)
+        return {"votes": [Vote(agent="antifrod", vote=vote, reason=reason)]}

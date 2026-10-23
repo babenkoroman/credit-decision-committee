@@ -5,3 +5,7 @@ alembic
 psycopg2-binary
 pydantic-settings
 python-dotenv
+langgraph
+langchain-core
+langchain-deepseek
+chromadb

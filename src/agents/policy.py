@@ -1,6 +1,7 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from src.agents.state import State
+from src.agents.parse import parse_vote_response
+from src.agents.state import State, Vote
 from src.infrastructure.llm.deepseek import get_llm
 from src.infrastructure.rag.chroma import search_policy
 
@@ -22,12 +23,10 @@ class PolicyAgent:
             [
                 SystemMessage(
                     content=(
-                        "Ты кредитный комитет. Решай строго по политикам компании ниже. "
-                        "Учитывай только сумму кредита и текст политик — другие факторы не выдумывай. "
-                        "Ответ кратко: "
-                        "1) решение: одобрено / условно одобрено со снижением / отказ; "
-                        "2) итоговый лимит в рублях, если применимо; "
-                        "3) обоснование в 2–3 предложениях со ссылкой на сегмент политики."
+                        "Ты агент кредитной политики. Решай строго по политикам ниже. "
+                        "Учитывай только сумму кредита и текст политик.\n"
+                        "Ответь ТОЛЬКО JSON без markdown:\n"
+                        '{"vote":"approve"|"reject"|"manual_review","reason":"2-3 предложения со ссылкой на сегмент"}'
                     )
                 ),
                 HumanMessage(
@@ -39,4 +38,5 @@ class PolicyAgent:
             ]
         )
 
-        return {"summary": f"{state.summary} {result.content}".strip()}
+        vote, reason = parse_vote_response(result.content)
+        return {"votes": [Vote(agent="policy", vote=vote, reason=reason)]}

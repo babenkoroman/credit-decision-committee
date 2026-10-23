@@ -5,6 +5,15 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
 *.egg-info/
 dist/
 build/
+chroma_data/
+.idea/
+.vscode/
+*.db
+.coverage
+htmlcov/
+Thumbs.db
+.DS_Store
