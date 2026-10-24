@@ -1,8 +1,11 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import select
 
 from src.infrastructure.db.models import Application
 
 from src.schemas import ApplicationDTO
+
+from typing import List
 
 class ApplicationRepository:
     def __init__(self, db: Session) -> None:
@@ -19,3 +22,7 @@ class ApplicationRepository:
 
     def commit(self) -> None:
         self._db.commit()
+
+    def all(self) -> List[Application]:
+        stmt = select(Application).options(selectinload(Application.votes))
+        return list(self._db.scalars(stmt).all())

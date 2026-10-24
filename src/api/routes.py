@@ -33,3 +33,9 @@ def application(
     elapsed = time.perf_counter() - start
     print(f"POST /application: {elapsed:.4f} сек.")
     return result
+
+@router.get("/applications")
+def applications(
+    service: ApplicationService = Depends(get_application_service),
+):
+    return service.get_list()
