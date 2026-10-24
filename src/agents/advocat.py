@@ -4,14 +4,15 @@ from src.agents.parse import parse_vote_response
 from src.agents.state import State, Vote
 from src.infrastructure.llm.deepseek import get_llm
 
+from src.infrastructure.db.models import Application
 
 class AdvocatAgent:
-    def __init__(self, application, llm=None):
+    def __init__(self, application: Application, llm=None):
         self._application = application
         self._llm = llm or get_llm()
 
     def __call__(self, state: State) -> dict:
-        application_json = self._application.model_dump_json(indent=2)
+        application_json = self._application.to_prompt_json()
         antifrod = next((v for v in state.votes if v.agent == "antifrod"), None)
         antifrod_text = (
             f"{antifrod.vote}: {antifrod.reason}" if antifrod else "нет заключения"

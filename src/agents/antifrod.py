@@ -11,7 +11,7 @@ class AntifrodAgent:
         self._llm = llm or get_llm()
 
     def __call__(self, state: State) -> dict:
-        application_json = self._application.model_dump_json(indent=2)
+        application_json = self._application.to_prompt_json()
 
         result = self._llm.invoke(
             [

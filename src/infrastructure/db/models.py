@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, func
@@ -31,6 +32,19 @@ class Application(Base):
         back_populates="application",
         cascade="all, delete-orphan",
     )
+
+    def to_prompt_json(self) -> str:
+        return json.dumps(
+            {
+                "id": self.id,
+                "first_name": self.first_name,
+                "second_name": self.second_name,
+                "applicant_id": self.applicant_id,
+                "credit_sum": self.credit_sum,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
 
 
 class AgentVote(Base):
