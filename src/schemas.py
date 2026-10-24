@@ -1,7 +1,9 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 
-class ApplicationDTO(BaseModel):
+class ApplicationCreateRequest(BaseModel):
     first_name: str | None = None
     second_name: str | None = None
     applicant_id: int | None = None
@@ -13,12 +15,23 @@ class ApplicationCreatedResponse(BaseModel):
 
 
 class Vote(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     agent: str
     vote: str
     reason: str
 
 
-class DecisionResponse(BaseModel):
-    decision: str = Field(description="approve | reject | manual_review")
-    memo: str
+class ApplicationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    first_name: str | None
+    second_name: str | None
+    applicant_id: int | None
+    credit_sum: float | None
+    decision: str | None
+    memo: str | None
     votes: list[Vote]
+    created_at: datetime
+    updated_at: datetime
